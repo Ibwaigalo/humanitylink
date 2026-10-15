@@ -8,7 +8,25 @@ import type { AppRole } from "@/lib/guards";
 
 type AuthUser = { role?: AppRole; organizationId?: string | null };
 
+function resolveAuthUrl(): string | undefined {
+  if (process.env.AUTH_URL) return process.env.AUTH_URL;
+  if (process.env.VERCEL_ENV === "preview" && process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+}
+
+const resolvedAuthUrl = resolveAuthUrl();
+if (resolvedAuthUrl) {
+  process.env.AUTH_URL = resolvedAuthUrl;
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   adapter: DrizzleAdapter(db, {
     usersTable: users,
     accountsTable: accounts,
