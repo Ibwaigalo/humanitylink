@@ -22,6 +22,7 @@ import {
   TextAreaField,
   TextField,
 } from "@/components/FormFields";
+import FileUploadField from "@/components/FileUploadField";
 import {
   ORG_STATUT_LABEL,
   ROLE_LABEL,
@@ -123,7 +124,7 @@ export default async function DashboardPage() {
               defaultValue={org.secteurPrincipal}
               required
             />
-            <TextField label="Logo (URL)" name="logoUrl" defaultValue={org.logoUrl} />
+            <FileUploadField label="Logo" name="logoUrl" kind="image" defaultValue={org.logoUrl} />
             <TextField label="Site web" name="siteWeb" defaultValue={org.siteWeb} />
             <TextField
               label="Page Facebook"
@@ -181,8 +182,8 @@ export default async function DashboardPage() {
             />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <TextField label="Photo (URL)" name="imageUrl" />
-            <TextField label="Vidéo (URL)" name="videoUrl" />
+            <FileUploadField label="Photo" name="imageUrl" kind="image" />
+            <FileUploadField label="Vidéo" name="videoUrl" kind="video" />
           </div>
           <SubmitButton>Publier</SubmitButton>
         </form>
@@ -248,7 +249,7 @@ export default async function DashboardPage() {
             <TextField label="Période — fin" name="periodeFin" type="date" />
           </div>
           <TextAreaField label="Résultat clé" name="resultatCle" rows={2} />
-          <TextField label="Image (URL)" name="imageUrl" />
+          <FileUploadField label="Image" name="imageUrl" kind="image" />
           <RegionCheckboxes />
           <SubmitButton>Créer le projet</SubmitButton>
         </form>
@@ -310,7 +311,7 @@ export default async function DashboardPage() {
                   defaultValue={project.resultatCle}
                   rows={2}
                 />
-                <TextField label="Image (URL)" name="imageUrl" defaultValue={project.imageUrl} />
+                <FileUploadField label="Image" name="imageUrl" kind="image" defaultValue={project.imageUrl} />
                 <RegionCheckboxes selected={project.regions} />
                 <div className="flex items-center gap-3">
                   <SubmitButton>Enregistrer</SubmitButton>
