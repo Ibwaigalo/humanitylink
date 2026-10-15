@@ -60,20 +60,38 @@ export default function PublicationCard({
 }: PublicationCardProps) {
   const [count, setCount] = useState(reactionCount);
   const [reagi, setReagi] = useState(false);
+  const [enCours, setEnCours] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
   const [copie, setCopie] = useState(false);
 
   async function reagir() {
-    if (reagi) return; // un like par utilisateur, pas de retrait pour rester simple en MVP
+    if (reagi || enCours) return; // un like par utilisateur, pas de retrait pour rester simple en MVP
+    const precedent = count;
+    setErreur(null);
+    setEnCours(true);
     setReagi(true);
     setCount((c) => c + 1);
     try {
-      await fetch("/api/reactions", {
+      const res = await fetch("/api/reactions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ publicationId: id }),
       });
+      if (!res.ok) {
+        setReagi(false);
+        setCount(precedent);
+        setErreur(
+          res.status === 401
+            ? "Connectez-vous pour réagir."
+            : "Échec de l'enregistrement. Réessayez."
+        );
+      }
     } catch {
-      // silencieux : le compteur reste optimiste, TODO gestion d'erreur (OpenCode)
+      setReagi(false);
+      setCount(precedent);
+      setErreur("Échec de l'enregistrement. Réessayez.");
+    } finally {
+      setEnCours(false);
     }
   }
 
@@ -133,7 +151,7 @@ export default function PublicationCard({
       <footer className="mt-3 flex items-center gap-4 border-t border-slate-100 pt-3 text-sm">
         <button
           onClick={reagir}
-          disabled={reagi}
+          disabled={reagi || enCours}
           className={`flex items-center gap-1 ${
             reagi ? "text-red-500" : "text-slate-500 hover:text-red-500"
           }`}
@@ -147,6 +165,11 @@ export default function PublicationCard({
           ↗ {copie ? "Lien copié" : "Partager"}
         </button>
       </footer>
+      {erreur && (
+        <p role="alert" className="mt-2 text-xs text-red-600">
+          {erreur}
+        </p>
+      )}
     </article>
   );
 }
