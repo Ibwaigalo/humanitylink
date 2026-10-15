@@ -133,6 +133,25 @@ async function seed() {
     organizationId: ongB.id,
   });
 
+  const adminEmail = process.env.SEED_ADMIN_EMAIL?.trim();
+  if (adminEmail) {
+    await upsertUser({
+      name: "Admin (seed)",
+      email: adminEmail,
+      role: "administrateur_plateforme",
+    });
+  }
+
+  const orgEmail = process.env.SEED_ORG_EMAIL?.trim();
+  if (orgEmail) {
+    await upsertUser({
+      name: "Responsable ONG (seed)",
+      email: orgEmail,
+      role: "administrateur_ong",
+      organizationId: amsode.id,
+    });
+  }
+
   await db.delete(publications);
 
   await db.insert(publications).values([
@@ -168,8 +187,9 @@ async function seed() {
     },
   ]);
 
+  const totalUsers = (await db.select().from(users)).length;
   console.log(
-    "Seed terminé : 3 organisations, 3 projets, 4 publications, 5 utilisateurs (rôles)."
+    `Seed terminé : 3 organisations, 3 projets, 4 publications, ${totalUsers} utilisateurs.`
   );
   process.exit(0);
 }
