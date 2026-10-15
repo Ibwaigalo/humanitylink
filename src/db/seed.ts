@@ -1,86 +1,139 @@
-// Script de données de test — à lancer avec : npx tsx src/db/seed.ts
-// (nécessite DATABASE_URL déjà configuré vers Neon, tables déjà migrées)
-
 import { db } from "./index";
-import { organizations, projects, publications } from "./schema";
+import { organizations, projects, publications, users } from "./schema";
+
+type NewOrg = typeof organizations.$inferInsert;
+type NewProject = typeof projects.$inferInsert;
+type NewUser = typeof users.$inferInsert;
+
+async function upsertOrg(values: NewOrg) {
+  const { slug, ...set } = values;
+  const [row] = await db
+    .insert(organizations)
+    .values(values)
+    .onConflictDoUpdate({ target: organizations.slug, set })
+    .returning();
+  return row;
+}
+
+async function upsertProject(values: NewProject) {
+  const { slug, ...set } = values;
+  const [row] = await db
+    .insert(projects)
+    .values(values)
+    .onConflictDoUpdate({ target: projects.slug, set })
+    .returning();
+  return row;
+}
+
+async function upsertUser(values: NewUser) {
+  const { email, ...set } = values;
+  const [row] = await db
+    .insert(users)
+    .values(values)
+    .onConflictDoUpdate({ target: users.email, set })
+    .returning();
+  return row;
+}
 
 async function seed() {
-  const [amsode] = await db
-    .insert(organizations)
-    .values({
-      slug: "amsode",
-      nom: "AMSODE",
-      description:
-        "Association malienne pour la solidarité et le développement — humanitaire et développement.",
-      secteurPrincipal: "securite_alimentaire",
-      regions: ["mopti", "segou", "sikasso", "kayes", "koulikoro", "gao", "tombouctou", "bamako"],
-      contactEmail: "contact@amsode.org",
-      statut: "verifie",
-    })
-    .returning();
+  const amsode = await upsertOrg({
+    slug: "amsode",
+    nom: "AMSODE",
+    description:
+      "Association malienne pour la solidarité et le développement — humanitaire et développement.",
+    secteurPrincipal: "securite_alimentaire",
+    regions: ["mopti", "segou", "sikasso", "kayes", "koulikoro", "gao", "tombouctou", "bamako"],
+    contactEmail: "contact@amsode.org",
+    statut: "verifie",
+  });
 
-  const [ongB] = await db
-    .insert(organizations)
-    .values({
-      slug: "ong-b",
-      nom: "ONG B",
-      description: "Organisation intervenant sur l'eau, l'hygiène et l'assainissement.",
-      secteurPrincipal: "wash",
-      regions: ["mopti"],
-      statut: "verifie",
-    })
-    .returning();
+  const ongB = await upsertOrg({
+    slug: "ong-b",
+    nom: "ONG B",
+    description: "Organisation intervenant sur l'eau, l'hygiène et l'assainissement.",
+    secteurPrincipal: "wash",
+    regions: ["mopti"],
+    statut: "verifie",
+  });
 
-  const [ongC] = await db
-    .insert(organizations)
-    .values({
-      slug: "ong-c",
-      nom: "ONG C",
-      description: "Organisation de terrain, production de contenu vidéo.",
-      secteurPrincipal: "education",
-      regions: ["gao"],
-      statut: "verifie",
-    })
-    .returning();
+  const ongC = await upsertOrg({
+    slug: "ong-c",
+    nom: "ONG C",
+    description: "Organisation de terrain, production de contenu vidéo.",
+    secteurPrincipal: "education",
+    regions: ["gao"],
+    statut: "en_attente",
+  });
 
-  const [projetKits] = await db
-    .insert(projects)
-    .values({
-      slug: "distribution-kits-alimentaires-mopti",
-      organizationId: amsode.id,
-      titre: "Distribution de kits alimentaires — Mopti",
-      description: "Distribution de kits alimentaires aux ménages vulnérables du cercle de Mopti.",
-      secteur: "securite_alimentaire",
-      regions: ["mopti"],
-      statut: "en_cours",
-      beneficiaires: "2 500 ménages",
-      nombreBeneficiaires: 2500,
-      resultatCle: "2 500 kits distribués",
-    })
-    .returning();
+  const projetKits = await upsertProject({
+    slug: "distribution-kits-alimentaires-mopti",
+    organizationId: amsode.id,
+    titre: "Distribution de kits alimentaires — Mopti",
+    description: "Distribution de kits alimentaires aux ménages vulnérables du cercle de Mopti.",
+    secteur: "securite_alimentaire",
+    regions: ["mopti"],
+    statut: "en_cours",
+    beneficiaires: "2 500 ménages",
+    nombreBeneficiaires: 2500,
+    resultatCle: "2 500 kits distribués",
+  });
 
-  await db.insert(projects).values([
-    {
-      slug: "formation-femmes-koulikoro",
-      organizationId: amsode.id,
-      titre: "Formation professionnelle des femmes — Koulikoro",
-      secteur: "moyens_existence",
-      regions: ["koulikoro"],
-      statut: "termine",
-      beneficiaires: "350 femmes",
-      nombreBeneficiaires: 350,
-    },
-    {
-      slug: "projet-wash-mopti",
-      organizationId: ongB.id,
-      titre: "Accès à l'eau potable — Mopti",
-      secteur: "wash",
-      regions: ["mopti"],
-      statut: "planifie",
-      beneficiaires: "1 200 personnes",
-      nombreBeneficiaires: 1200,
-    },
-  ]);
+  await upsertProject({
+    slug: "formation-femmes-koulikoro",
+    organizationId: amsode.id,
+    titre: "Formation professionnelle des femmes — Koulikoro",
+    secteur: "moyens_existence",
+    regions: ["koulikoro"],
+    statut: "termine",
+    beneficiaires: "350 femmes",
+    nombreBeneficiaires: 350,
+  });
+
+  await upsertProject({
+    slug: "projet-wash-mopti",
+    organizationId: ongB.id,
+    titre: "Accès à l'eau potable — Mopti",
+    secteur: "wash",
+    regions: ["mopti"],
+    statut: "planifie",
+    beneficiaires: "1 200 personnes",
+    nombreBeneficiaires: 1200,
+  });
+
+  await upsertUser({
+    name: "Admin Plateforme",
+    email: "admin@humanitylink.org",
+    role: "administrateur_plateforme",
+  });
+
+  await upsertUser({
+    name: "Modérateur",
+    email: "moderateur@humanitylink.org",
+    role: "moderateur",
+  });
+
+  await upsertUser({
+    name: "Responsable AMSODE",
+    email: "responsable@amsode.org",
+    role: "administrateur_ong",
+    organizationId: amsode.id,
+  });
+
+  await upsertUser({
+    name: "Membre AMSODE",
+    email: "membre@amsode.org",
+    role: "membre_organisation",
+    organizationId: amsode.id,
+  });
+
+  await upsertUser({
+    name: "Responsable ONG B",
+    email: "contact@ongb.org",
+    role: "administrateur_ong",
+    organizationId: ongB.id,
+  });
+
+  await db.delete(publications);
 
   await db.insert(publications).values([
     {
@@ -115,7 +168,9 @@ async function seed() {
     },
   ]);
 
-  console.log("Seed terminé : 3 organisations, 3 projets, 4 publications.");
+  console.log(
+    "Seed terminé : 3 organisations, 3 projets, 4 publications, 5 utilisateurs (rôles)."
+  );
   process.exit(0);
 }
 

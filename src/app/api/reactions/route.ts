@@ -3,8 +3,6 @@ import { db } from "@/db";
 import { reactions } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
-// TODO (OpenCode) : brancher l'auth réelle une fois NextAuth configuré avec Neon.
-// Ce endpoint attend { publicationId } et ajoute une réaction pour l'utilisateur connecté.
 export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
